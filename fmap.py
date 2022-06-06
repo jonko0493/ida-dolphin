@@ -1,13 +1,15 @@
-import sets
+from collections import Counter
+import idc
 import sys
 import re
 
 def loadmap(mapfilename):
     address_dict = {}
     di = {}
-    f = open(mapfilename, "r");
+    f = open(mapfilename, "r")
     content = f.readlines()
     started = False
+    used_names = []
     for line in content:
         if len(line) < 4:
             continue
@@ -16,7 +18,7 @@ def loadmap(mapfilename):
         if temp=="UNUSED":
             continue
         if temp==".text":
-            started = True;
+            started = True
             continue
         if temp==".init":
             started = True
@@ -57,6 +59,10 @@ def loadmap(mapfilename):
             name = m.group("name").split()[0]
             obj = m.group("name").split()[-1]
             if ((name != ".text" and name != ".init") and len(name) > 3):
+                used_names.append(name)
+                c = Counter(used_names)
+                if c[name] > 1:
+                    name = "%s%d" % (name,(used_names.count(name) - 1))
                 address_dict[m.group("vaddress")] = {"address" : m.group("address"), "size": m.group("size"), 
                                                      "vaddress" : m.group("vaddress"), "name" : name, "obj" : obj}
                 try:
@@ -69,17 +75,16 @@ def loadmap(mapfilename):
 
 def print_di(di):
     for k in di:
-        print k
+        print(k)
         for f in di[k]:
-            print "\t%s" % f
+            print("\t%s" % f)
 
 def print_ad(ad):
     for k in ad:
-        print ad[k]
+        print(ad)[k]
 			
 ad, di = loadmap("main.map")
 
 for k in ad:
-    MakeNameEx(LocByName(GetFunctionName(int("0x%s"%k,16))), ad[k]["name"], SN_PUBLIC)
-    print GetFunctionName(int("0x%s"%k,16)), k, ad[k]["name"]
-    
+    idc.set_name(idc.get_name_ea_simple(idc.get_func_name(int("0x%s" % k,16))), ad[k]["name"], SN_PUBLIC)
+    print(idc.get_func_name(int("0x%s" % k,16)), k, ad[k]["name"])
