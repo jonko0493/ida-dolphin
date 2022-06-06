@@ -1,6 +1,5 @@
 from collections import Counter
 import idc
-import sys
 import re
 
 def loadmap(mapfilename):
